@@ -1,0 +1,384 @@
+{
+  "RemoteTech": {
+    "documentation": "<doc>\n<summary>\nThis service provides functionality to interact with\n<a href=\"http://forum.kerbalspaceprogram.com/index.php?/topic/139167-12-remotetech-v180-2016-10-15/\">RemoteTech</a>.\n</summary>\n</doc>",
+    "procedures": {
+      "Comms": {
+        "parameters": [
+          {
+            "name": "vessel",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "uint64",
+        "attributes": [
+          "ParameterType(0).Class(SpaceCenter.Vessel)",
+          "ReturnType.Class(RemoteTech.Comms)"
+        ],
+        "documentation": "<doc>\n<summary>\nGet a communications object, representing the communication capability of a particular vessel.\n</summary>\n</doc>"
+      },
+      "Antenna": {
+        "parameters": [
+          {
+            "name": "part",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "uint64",
+        "attributes": [
+          "ParameterType(0).Class(SpaceCenter.Part)",
+          "ReturnType.Class(RemoteTech.Antenna)"
+        ],
+        "documentation": "<doc>\n<summary>\nGet the antenna object for a particular part.\n</summary>\n</doc>"
+      },
+      "get_Available": {
+        "parameters": [],
+        "return_type": "bool",
+        "attributes": [
+          "Property.Get(Available)"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether RemoteTech is installed.\n</summary>\n</doc>"
+      },
+      "get_GroundStations": {
+        "parameters": [],
+        "return_type": "KRPC.List",
+        "attributes": [
+          "Property.Get(GroundStations)",
+          "ReturnType.List(string)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe names of the ground stations.\n</summary>\n</doc>"
+      },
+      "Antenna_get_Part": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "uint64",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Antenna,Part)",
+          "ParameterType(0).Class(RemoteTech.Antenna)",
+          "ReturnType.Class(SpaceCenter.Part)"
+        ],
+        "documentation": "<doc>\n<summary>\nGet the part containing this antenna.\n</summary>\n</doc>"
+      },
+      "Antenna_get_HasConnection": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "bool",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Antenna,HasConnection)",
+          "ParameterType(0).Class(RemoteTech.Antenna)"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the antenna has a connection.\n</summary>\n</doc>"
+      },
+      "Antenna_get_Target": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "int32",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Antenna,Target)",
+          "ParameterType(0).Class(RemoteTech.Antenna)",
+          "ReturnType.Enum(RemoteTech.Target)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe object that the antenna is targetting.\nThis property can be used to set the target to <see cref=\"M:RemoteTech.Target.None\" /> or <see cref=\"M:RemoteTech.Target.ActiveVessel\" />.\nTo set the target to a celestial body, ground station or vessel see <see cref=\"M:RemoteTech.Antenna.TargetBody\" />,\n<see cref=\"M:RemoteTech.Antenna.TargetGroundStation\" /> and <see cref=\"M:RemoteTech.Antenna.TargetVessel\" />.\n</summary>\n</doc>"
+      },
+      "Antenna_set_Target": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          },
+          {
+            "name": "value",
+            "type": "int32"
+          }
+        ],
+        "attributes": [
+          "Class.Property.Set(RemoteTech.Antenna,Target)",
+          "ParameterType(0).Class(RemoteTech.Antenna)",
+          "ParameterType(1).Enum(RemoteTech.Target)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe object that the antenna is targetting.\nThis property can be used to set the target to <see cref=\"M:RemoteTech.Target.None\" /> or <see cref=\"M:RemoteTech.Target.ActiveVessel\" />.\nTo set the target to a celestial body, ground station or vessel see <see cref=\"M:RemoteTech.Antenna.TargetBody\" />,\n<see cref=\"M:RemoteTech.Antenna.TargetGroundStation\" /> and <see cref=\"M:RemoteTech.Antenna.TargetVessel\" />.\n</summary>\n</doc>"
+      },
+      "Antenna_get_TargetBody": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "uint64",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Antenna,TargetBody)",
+          "ParameterType(0).Class(RemoteTech.Antenna)",
+          "ReturnType.Class(SpaceCenter.CelestialBody)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe celestial body the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Antenna_set_TargetBody": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          },
+          {
+            "name": "value",
+            "type": "uint64"
+          }
+        ],
+        "attributes": [
+          "Class.Property.Set(RemoteTech.Antenna,TargetBody)",
+          "ParameterType(0).Class(RemoteTech.Antenna)",
+          "ParameterType(1).Class(SpaceCenter.CelestialBody)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe celestial body the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Antenna_get_TargetGroundStation": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "string",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Antenna,TargetGroundStation)",
+          "ParameterType(0).Class(RemoteTech.Antenna)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe ground station the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Antenna_set_TargetGroundStation": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          },
+          {
+            "name": "value",
+            "type": "string"
+          }
+        ],
+        "attributes": [
+          "Class.Property.Set(RemoteTech.Antenna,TargetGroundStation)",
+          "ParameterType(0).Class(RemoteTech.Antenna)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe ground station the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Antenna_get_TargetVessel": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "uint64",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Antenna,TargetVessel)",
+          "ParameterType(0).Class(RemoteTech.Antenna)",
+          "ReturnType.Class(SpaceCenter.Vessel)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe vessel the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Antenna_set_TargetVessel": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          },
+          {
+            "name": "value",
+            "type": "uint64"
+          }
+        ],
+        "attributes": [
+          "Class.Property.Set(RemoteTech.Antenna,TargetVessel)",
+          "ParameterType(0).Class(RemoteTech.Antenna)",
+          "ParameterType(1).Class(SpaceCenter.Vessel)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe vessel the antenna is targetting.\n</summary>\n</doc>"
+      },
+      "Comms_SignalDelayToVessel": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          },
+          {
+            "name": "other",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "double",
+        "attributes": [
+          "Class.Method(RemoteTech.Comms,SignalDelayToVessel)",
+          "ParameterType(0).Class(RemoteTech.Comms)",
+          "ParameterType(1).Class(SpaceCenter.Vessel)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe signal delay between the this vessel and another vessel, in seconds.\n</summary>\n<param name=\"other\"></param>\n</doc>"
+      },
+      "Comms_get_Vessel": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "uint64",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Comms,Vessel)",
+          "ParameterType(0).Class(RemoteTech.Comms)",
+          "ReturnType.Class(SpaceCenter.Vessel)"
+        ],
+        "documentation": "<doc>\n<summary>\nGet the vessel.\n</summary>\n</doc>"
+      },
+      "Comms_get_HasLocalControl": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "bool",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Comms,HasLocalControl)",
+          "ParameterType(0).Class(RemoteTech.Comms)"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the vessel can be controlled locally.\n</summary>\n</doc>"
+      },
+      "Comms_get_HasFlightComputer": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "bool",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Comms,HasFlightComputer)",
+          "ParameterType(0).Class(RemoteTech.Comms)"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the vessel has a flight computer on board.\n</summary>\n</doc>"
+      },
+      "Comms_get_HasConnection": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "bool",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Comms,HasConnection)",
+          "ParameterType(0).Class(RemoteTech.Comms)"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the vessel has any connection.\n</summary>\n</doc>"
+      },
+      "Comms_get_HasConnectionToGroundStation": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "bool",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Comms,HasConnectionToGroundStation)",
+          "ParameterType(0).Class(RemoteTech.Comms)"
+        ],
+        "documentation": "<doc>\n<summary>\nWhether the vessel has a connection to a ground station.\n</summary>\n</doc>"
+      },
+      "Comms_get_SignalDelay": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "double",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Comms,SignalDelay)",
+          "ParameterType(0).Class(RemoteTech.Comms)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe shortest signal delay to the vessel, in seconds.\n</summary>\n</doc>"
+      },
+      "Comms_get_SignalDelayToGroundStation": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "double",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Comms,SignalDelayToGroundStation)",
+          "ParameterType(0).Class(RemoteTech.Comms)"
+        ],
+        "documentation": "<doc>\n<summary>\nThe signal delay between the vessel and the closest ground station, in seconds.\n</summary>\n</doc>"
+      },
+      "Comms_get_Antennas": {
+        "parameters": [
+          {
+            "name": "this",
+            "type": "uint64"
+          }
+        ],
+        "return_type": "KRPC.List",
+        "attributes": [
+          "Class.Property.Get(RemoteTech.Comms,Antennas)",
+          "ParameterType(0).Class(RemoteTech.Comms)",
+          "ReturnType.List(Class(RemoteTech.Antenna))"
+        ],
+        "documentation": "<doc>\n<summary>\nThe antennas for this vessel.\n</summary>\n</doc>"
+      }
+    },
+    "classes": {
+      "Antenna": {
+        "documentation": "<doc>\n<summary>\nA RemoteTech antenna. Obtained by calling <see cref=\"M:RemoteTech.Comms.Antennas\" /> or <see cref=\"M:RemoteTech.Antenna\" />.\n</summary>\n</doc>"
+      },
+      "Comms": {
+        "documentation": "<doc>\n<summary>\nCommunications for a vessel.\n</summary>\n</doc>"
+      }
+    },
+    "enumerations": {
+      "Target": {
+        "documentation": "<doc>\n<summary>\nThe type of object an antenna is targetting.\nSee <see cref=\"M:RemoteTech.Antenna.Target\" />.\n</summary>\n</doc>",
+        "values": [
+          {
+            "name": "ActiveVessel",
+            "value": 0,
+            "documentation": "<doc>\n<summary>\nThe active vessel.\n</summary>\n</doc>"
+          },
+          {
+            "name": "CelestialBody",
+            "value": 1,
+            "documentation": "<doc>\n<summary>\nA celestial body.\n</summary>\n</doc>"
+          },
+          {
+            "name": "GroundStation",
+            "value": 2,
+            "documentation": "<doc>\n<summary>\nA ground station.\n</summary>\n</doc>"
+          },
+          {
+            "name": "Vessel",
+            "value": 3,
+            "documentation": "<doc>\n<summary>\nA specific vessel.\n</summary>\n</doc>"
+          },
+          {
+            "name": "None",
+            "value": 4,
+            "documentation": "<doc>\n<summary>\nNo target.\n</summary>\n</doc>"
+          }
+        ]
+      }
+    }
+  }
+}
