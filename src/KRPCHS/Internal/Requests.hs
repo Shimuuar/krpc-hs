@@ -21,7 +21,8 @@ module KRPCHS.Internal.Requests
   , extractStreamResponse
   , getStreamMessage
     -- * Monad API
-  , RPCContext(..)
+  , RPCContextT(..)
+  , runRPCProg
   , MonadRPC(..)
     -- * Message manipulation
   , KRPCResponseExtractable(..)
@@ -30,9 +31,9 @@ module KRPCHS.Internal.Requests
   , makeRequest
   ) where
 
-import Control.Monad.Catch  (MonadThrow(..),MonadCatch,MonadMask)
+import Control.Monad.Catch  (MonadThrow(..),MonadCatch,MonadMask,bracket,try)
 import Control.Monad.Reader
-import Control.Exception
+import Control.Exception    (SomeException(..),AsyncException(..),Exception(..))
 import Control.Concurrent
 
 import Network.Socket
@@ -65,11 +66,6 @@ import qualified Text.ProtocolBuffers  as P
 -- RPC Client & primitives
 ----------------------------------------------------------------
 
--- | Monad from which one can obtain RPC client
-class Monad m => MonadRPC m where
-  askClient :: m RPCClient
-
-
 -- | Connection to KRPC.
 --
 --   Note that to avoid possibility of message fragmentation network
@@ -79,39 +75,44 @@ data RPCClient = RPCClient
   , clientId :: BS.ByteString
   }
 
-type ChanRequest = (KReq.Request, MVar (Either SomeException KRes.Response))
-
--- | Type class for monad which keep connection to RPC server as
---   context
-
 -- | Connect to RPC server
 withRPCClient
-  :: String                     -- ^ Name to send to kRPC
+  :: (MonadMask m, MonadIO m)
+  => String                     -- ^ Name to send to kRPC
   -> HostName                   -- ^ Hostname to connect to
   -> ServiceName                -- ^ Port to connect to
-  -> (RPCClient -> IO a)        -- ^ Action to perform
-  -> IO a
+  -> (RPCClient -> m a)        -- ^ Action to perform
+  -> m a
 withRPCClient name host port action = withSocket host port $ \sock -> do
   -- Perform RPC handshake
-  cid <- rpcHandshake sock name
+  cid <- liftIO $ rpcHandshake sock name
   -- Fork off worker process for network IO (It's done inside bracket
   -- to ensure that we don't leak p
-  ch <- newChan
-  bracket (forkIOWithUnmask ($ networkIOWorker sock ch)) killThread $ \_ ->
-    action RPCClient { rpcChan  = ch
-                     , clientId = cid
-                     }
+  ch <- liftIO newChan
+  bracket
+    (liftIO $ forkIOWithUnmask ($ networkIOWorker sock ch))
+    (liftIO . killThread)
+    (\_ -> action RPCClient { rpcChan  = ch
+                            , clientId = cid
+                            })
+
+-- | Monad from which one can obtain RPC client
+class Monad m => MonadRPC m where
+  askClient :: m RPCClient
+
 
 -- | Send request to RPC server and receive reply
 sendRequest :: (MonadRPC m, MonadIO m) => KReq.Request -> m KRes.Response
 sendRequest req = do
-    ch <- rpcChan <$> askClient
-    liftIO $ do
-      var <- newEmptyMVar
-      writeChan ch (req,var)
-      takeMVar var >>= \case
-        Left  e -> throwIO e
-        Right r -> return r
+  ch <- rpcChan <$> askClient
+  liftIO $ do
+    var <- newEmptyMVar
+    writeChan ch (req,var)
+    takeMVar var >>= \case
+      Left  e -> throwM e
+      Right r -> return r
+
+type ChanRequest = (KReq.Request, MVar (Either SomeException KRes.Response))
 
 -- Worker process for network IO. To send request to RPC server we
 -- push message to Chan alongside with empty MVar. Worker perform
@@ -127,7 +128,7 @@ networkIOWorker sock ch = forever $ do
     -- killable
     case rsp of
       Left e | Just ThreadKilled <- fromException e
-             -> throwIO ThreadKilled
+             -> throwM ThreadKilled
       _      -> putMVar var rsp
 
 -- Get response from RPC server
@@ -138,18 +139,19 @@ recvResponse sock = do
 
 -- Perform IO operation using socket. It's closed after action whether
 -- upon normal termination of because of exception
-withSocket :: HostName -> ServiceName -> (Socket -> IO a) -> IO a
+withSocket :: (MonadMask m, MonadIO m)
+           => HostName -> ServiceName -> (Socket -> m a) -> m a
 withSocket host port action
   = bracket initS fini body
   where
-    initS = do
+    initS = liftIO $do
       -- FIXME: do something more sensible!
       addr:_ <- getAddrInfo Nothing (Just host) (Just port)
       sock   <- socket AF_INET Stream defaultProtocol
       return (sock,addr)
-    fini (sock,_)    = close sock
+    fini (sock,_)    = liftIO $ close sock
     body (sock,addr) = do
-      connect sock (addrAddress addr)
+      liftIO $ connect sock (addrAddress addr)
       action sock
 
 -- Perform kRPC handshake. Returns client identifier
@@ -235,10 +237,14 @@ streamHandshake sock clientId = do
 ----------------------------------------------------------------
 
 -- | Reader monad which uses RPCClient as context.
-newtype RPCContext a = RPCContext { runRPCContext :: ReaderT RPCClient IO a }
-    deriving (Functor, Applicative, Monad, MonadIO, MonadReader RPCClient, MonadThrow, MonadCatch, MonadMask)
+newtype RPCContextT m a = RPCContextT { runRPCContextT :: ReaderT RPCClient m a }
+  deriving ( Functor, Applicative, Monad, MonadIO
+           , MonadReader RPCClient, MonadThrow, MonadCatch, MonadMask)
 
-instance MonadRPC RPCContext where
+runRPCProg :: Monad m => RPCClient -> RPCContextT m a -> m a
+runRPCProg client ctx = runReaderT (runRPCContextT ctx) client
+
+instance Monad m => MonadRPC (RPCContextT m) where
   askClient = ask
 
 

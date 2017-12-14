@@ -55,6 +55,7 @@ library
 
 
 executable FlightRecorderCSV
+    buildable:           False
     hs-source-dirs:      examples
     main-is:             FlightRecorderCSV.hs
     ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
@@ -66,6 +67,7 @@ executable FlightRecorderCSV
 
 
 executable KillRotation
+    buildable:           False
     hs-source-dirs:      examples
     main-is:             KillRotation.hs
     ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
@@ -77,6 +79,7 @@ executable KillRotation
 
 
 executable ListBiomes
+    buildable:           False
     hs-source-dirs:      examples
     main-is:             ListBiomes.hs
     ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N

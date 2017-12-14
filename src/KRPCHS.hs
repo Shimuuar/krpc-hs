@@ -3,7 +3,7 @@
 module KRPCHS
 ( RPCClient
 , StreamClient
-, RPCContext
+, RPCContextT
 , MonadRPC(..)
 
 , KRPCStream
@@ -47,10 +47,6 @@ import Control.Monad.Reader
 
 import qualified Data.Map as M
 
-
-
-runRPCProg :: RPCClient -> RPCContext a -> IO a
-runRPCProg client ctx = runReaderT (runRPCContext ctx) client
 
 
 {-
