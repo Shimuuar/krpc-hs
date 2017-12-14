@@ -4,31 +4,31 @@
 {-# LANGUAGE RecordWildCards            #-}
 
 module KRPCHS.Internal.Requests
-( -- * RPC Client & primitives
-  RPCClient
-, withRPCClient
-, sendRequest
-  -- * Stream client & stream primitives
-, StreamClient
-, withStreamClient
-, KRPCStream(..)
-, KRPCStreamReq(..)
-, KRPCStreamMsg(..)
-, emptyKRPCStreamMsg
-, makeStream
-, requestStream
-, extractStreamMessage
-, extractStreamResponse
-, getStreamMessage
-  -- * Monad API
-, RPCContext(..)
-, MonadRPC(..)
-  -- * Message manipulation
-, KRPCResponseExtractable(..)
-, makeArgument
-, processResponse
-, makeRequest
-) where
+  ( -- * RPC Client & primitives
+    RPCClient
+  , withRPCClient
+  , sendRequest
+    -- * Stream client & stream primitives
+  , StreamClient
+  , withStreamClient
+  , KRPCStream(..)
+  , KRPCStreamReq(..)
+  , KRPCStreamMsg(..)
+  , emptyKRPCStreamMsg
+  , makeStream
+  , requestStream
+  , extractStreamMessage
+  , extractStreamResponse
+  , getStreamMessage
+    -- * Monad API
+  , RPCContext(..)
+  , MonadRPC(..)
+    -- * Message manipulation
+  , KRPCResponseExtractable(..)
+  , makeArgument
+  , processResponse
+  , makeRequest
+  ) where
 
 import Control.Monad.Catch  (MonadThrow(..),MonadCatch,MonadMask)
 import Control.Monad.Reader
