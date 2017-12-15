@@ -1,7 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ApplicativeDo #-}
 import KRPCHS
 import KRPCHS.Service.SpaceCenter
 
+import Control.Monad
 import Control.Monad.IO.Class
 import Control.Exception
 import Data.Typeable
@@ -18,25 +20,19 @@ check action = do
                                  throwIO x
 main :: IO ()
 main = check $ runKRPC "simple program" "192.168.1.5" "50000" $ do
-  vsl     <- call getActiveVessel
-  control <- call $ getVesselControl vsl
-  ref     <- call $ getVesselReferenceFrame vsl
-  orbit   <- call $ getVesselOrbit vsl
-
-  liftIO . print =<< call (getOrbitOrbitalSpeed orbit)
-  liftIO . print =<< call (getOrbitOrbitalSpeed orbit)
-  liftIO . print =<< call (getOrbitOrbitalSpeed orbit)
-  liftIO . print =<< call (getVesselMET vsl)
-  liftIO . print =<< call (getVesselMET vsl)
-  liftIO . print =<< call (getVesselMET vsl)
-  liftIO $ do
-    print vsl
-    print control
-    print ref
-    print orbit
-  liftIO . print =<< call (getOrbitNextOrbit orbit)
-  return ()
+  vessel    <- call getActiveVessel
+  control   <- call $ getVesselControl vessel
+  maxStage  <- call $ getControlCurrentStage control
+  liftIO $ print maxStage
   --
-       
-
-                        
+  liftIO . print =<< call (getControlAntennas control)
+  liftIO . print =<< call (getVesselCrewCapacity vessel)
+  liftIO . print =<< call (getVesselCrewCount vessel)
+ -- -- 
+  -- resources <- sequenceA [ call $ vesselResourcesInDecoupleStage vessel i False
+  --                        | i <- [0 .. maxStage]]
+  -- forM_ [0 .. fromIntegral maxStage] $ \stage -> do
+  --   liftIO $ print stage
+  --   solidFuel  <- call $ resourcesAmount (resources !! stage) "SolidFuel"
+  --   liquidFuel <- call $ resourcesAmount (resources !! stage) "LiquidFuel"
+  --   liftIO $ print (solidFuel,liquidFuel)

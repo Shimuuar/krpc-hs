@@ -115,13 +115,13 @@ instance PbSerializable Int where
 
 
 instance PbSerializable Int32 where
-    decodePb bytes = fromIntegral <$> (decodePb_ 5 bytes :: Either ProtocolError B.Int32)
-    encodePb i     = W.runPut (W.wirePut 5 (fromIntegral i :: B.Int32))
+    decodePb = decodePb_ 17
+    encodePb = W.runPut . W.wirePut 17
 
 
 instance PbSerializable Int64 where
-    decodePb bytes = fromIntegral <$> (decodePb_ 3 bytes :: Either ProtocolError B.Int64)
-    encodePb i     = W.runPut (W.wirePut 3 (fromIntegral i :: B.Int64))
+    decodePb = decodePb_ 18
+    encodePb = W.runPut . W.wirePut 18
 
 
 instance PbSerializable Word32 where

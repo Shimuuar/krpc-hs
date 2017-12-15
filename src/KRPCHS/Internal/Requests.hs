@@ -279,9 +279,7 @@ withSocket host port action
     initS = liftIO $do
       -- FIXME: do something more sensible!
       addr:_ <- getAddrInfo Nothing (Just host) (Just port)
-      print addr
       sock   <- socket AF_INET Stream defaultProtocol
-      print sock
       return (sock,addr)
     fini (sock,_)    = liftIO $ close sock
     body (sock,addr) = do
