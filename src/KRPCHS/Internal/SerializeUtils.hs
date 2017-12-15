@@ -100,19 +100,18 @@ instance PbSerializable () where
 
 
 instance PbSerializable Double where
-    decodePb bytes = realToFrac <$> (decodePb_ 1 bytes :: Either ProtocolError B.Double)
-    encodePb f     = W.runPut (W.wirePut 1 (realToFrac f :: B.Double))
+    decodePb = decodePb_ 1
+    encodePb = W.runPut . W.wirePut 1
 
 
 instance PbSerializable Float where
-    decodePb bytes = realToFrac <$> (decodePb_ 2 bytes :: Either ProtocolError B.Float)
-    encodePb f     = W.runPut (W.wirePut 2 (realToFrac f :: B.Float))
+    decodePb = decodePb_ 2
+    encodePb = W.runPut . W.wirePut 2
 
 
 instance PbSerializable Int where
     decodePb bytes = fromIntegral <$> (decodePb_ 4 bytes :: Either ProtocolError B.Word64)
     encodePb i     = W.runPut (W.wirePut 4 (fromIntegral i :: B.Word64))
-
 
 instance PbSerializable Int32 where
     decodePb = decodePb_ 17
@@ -125,18 +124,18 @@ instance PbSerializable Int64 where
 
 
 instance PbSerializable Word32 where
-    decodePb bytes = fromIntegral <$> (decodePb_ 13 bytes :: Either ProtocolError B.Word32)
-    encodePb i     = W.runPut (W.wirePut 13 (fromIntegral i :: B.Word32))
+    decodePb = decodePb_ 13
+    encodePb = W.runPut . W.wirePut 13
 
 
 instance PbSerializable Word64 where
-    decodePb bytes = fromIntegral <$> (decodePb_ 4 bytes :: Either ProtocolError B.Word64)
-    encodePb i     = W.runPut (W.wirePut 4 (fromIntegral i :: B.Word64))
+    decodePb = decodePb_ 4
+    encodePb = W.runPut . W.wirePut 4
 
 
 instance PbSerializable Bool where
-    decodePb   = decodePb_ 8
-    encodePb b = W.runPut (W.wirePut 8 b)
+    decodePb = decodePb_ 8
+    encodePb = W.runPut . W.wirePut 8
 
 
 instance PbSerializable T.Text where
