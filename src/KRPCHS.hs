@@ -1,37 +1,14 @@
 {-# LANGUAGE RecordWildCards #-}
-
-module KRPCHS
-( RPCClient
-, StreamClient
-, RPCContextT
-, MonadRPC(..)
-
-, KRPCStream
-, KRPCStreamReq
-, KRPCStreamMsg
-, KRPCResponseExtractable
-, emptyKRPCStreamMsg
-, getStreamMessage
-, getStreamMessageIO
-, messageResultsCount
-, messageHasResultFor
-, addStream
-, removeStream
-, withStream
-, getStreamResult
-
-, withRPCClient
-, withStreamClient
-, runRPCProg
-
-, KRPC.Status(..)
-, KRPC.Service(..)
-, KRPC.Services(..)
---, getStatus
---, getServices
-
-, ProtocolError(..)
-) where
+module KRPCHS (
+    -- * Monadic API for KRPC
+    KRPC
+  , runKRPC
+    -- * RPC API
+  , RpcCall
+  , MonadRPC(..)
+    -- * Serialization and deserialization
+  , KRPCResponseExtractable(..)
+  ) where
 
 
 
@@ -49,52 +26,33 @@ import qualified Data.Map as M
 
 
 
-{-
-getStatus :: RPCContext KRPC.Status
-getStatus = do
-    resp <- sendRequest (makeRequest "KRPC" "GetStatus" [])
-    processResponse resp
+-- messageResultsCount :: KRPCStreamMsg -> Int
+-- messageResultsCount = M.size . streamMsg
 
 
-getServices :: RPCContext KRPC.Services
-getServices = do
-    resp <- sendRequest (makeRequest "KRPC" "GetServices" [])
-    processResponse resp
--}
+-- messageHasResultFor :: KRPCStream a -> KRPCStreamMsg -> Bool
+-- messageHasResultFor KRPCStream{..} KRPCStreamMsg{..} =
+--     M.member streamId streamMsg
 
 
--- Deprecated
-getStreamMessageIO :: MonadIO m => StreamClient -> m KRPCStreamMsg
-getStreamMessageIO = getStreamMessage
-{-# DEPRECATED getStreamMessageIO "use 'getStreamMessage' instead" #-}
-
-messageResultsCount :: KRPCStreamMsg -> Int
-messageResultsCount = M.size . streamMsg
+-- getStreamResult :: (MonadThrow m, KRPCResponseExtractable a) => KRPCStream a -> KRPCStreamMsg -> m a
+-- getStreamResult KRPCStream{..} KRPCStreamMsg{..} =
+--     maybe (throwM NoSuchStream)
+--           (processResponse)
+--           (M.lookup streamId streamMsg)
 
 
-messageHasResultFor :: KRPCStream a -> KRPCStreamMsg -> Bool
-messageHasResultFor KRPCStream{..} KRPCStreamMsg{..} =
-    M.member streamId streamMsg
+-- addStream :: (MonadRPC m, MonadThrow m, MonadIO m) => KRPCStreamReq a -> m (KRPCStream a)
+-- addStream = requestStream
 
 
-getStreamResult :: (MonadThrow m, KRPCResponseExtractable a) => KRPCStream a -> KRPCStreamMsg -> m a
-getStreamResult KRPCStream{..} KRPCStreamMsg{..} =
-    maybe (throwM NoSuchStream)
-          (processResponse)
-          (M.lookup streamId streamMsg)
+-- removeStream :: (MonadRPC m, MonadThrow m, MonadIO m) => KRPCStream a -> m ()
+-- removeStream KRPCStream{..} = do
+--     resp <- sendRequest (makeRequest "KRPC" "RemoveStream" [ makeArgument 0 streamId ])
+--     processResponse resp
 
 
-addStream :: (MonadRPC m, MonadThrow m, MonadIO m) => KRPCStreamReq a -> m (KRPCStream a)
-addStream = requestStream
-
-
-removeStream :: (MonadRPC m, MonadThrow m, MonadIO m) => KRPCStream a -> m ()
-removeStream KRPCStream{..} = do
-    resp <- sendRequest (makeRequest "KRPC" "RemoveStream" [ makeArgument 0 streamId ])
-    processResponse resp
-
-
-withStream :: (MonadMask m, MonadRPC m, MonadIO m) => KRPCStreamReq a -> (KRPCStream a -> m b) -> m b
-withStream r f = mask $ \restore -> do
-    s <- addStream r
-    restore (f s) `finally` (removeStream s)
+-- withStream :: (MonadMask m, MonadRPC m, MonadIO m) => KRPCStreamReq a -> (KRPCStream a -> m b) -> m b
+-- withStream r f = mask $ \restore -> do
+--     s <- addStream r
+--     restore (f s) `finally` (removeStream s)

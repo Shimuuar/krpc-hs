@@ -1,6 +1,7 @@
 module KRPCHS.Internal.ProtocolError
-( ProtocolError(..)
-) where
+  ( ProtocolError(..)
+  , InternalError(..)
+  ) where
 
 import Data.Typeable
 import Control.Monad.Catch
@@ -12,8 +13,7 @@ data ProtocolError
     | KRPCError String
     | DecodeFailure String
     deriving (Typeable, Eq)
-
-
+         
 instance Show ProtocolError where
     show UnknownError      = "Unknown"
     show ResponseEmpty     = "Empty response"
@@ -21,5 +21,11 @@ instance Show ProtocolError where
     show (KRPCError e)     = "KRPC Error: '" ++ e ++ "'"
     show (DecodeFailure e) = "Decoding failure: " ++ e
 
-
 instance Exception ProtocolError
+
+
+data InternalError
+  = ResponseParserFailed String
+  deriving (Typeable,Show,Eq)
+
+instance Exception InternalError

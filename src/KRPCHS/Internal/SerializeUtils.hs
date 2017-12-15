@@ -1,12 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module KRPCHS.Internal.SerializeUtils
-( PbSerializable
-, decodePb
-, encodePb
-, messagePut
-, messageGet
-) where
+  ( PbSerializable
+  , decodePb
+  , encodePb
+  , messagePut
+  , messageGet
+  , packUtf8String
+  , unpackUtf8String
+  ) where
 
 
 import Data.Int
@@ -64,6 +66,12 @@ import qualified PB.KRPC.DictionaryEntry as KDictE
  - -}
 
 
+packUtf8String :: String -> B.Utf8
+packUtf8String = P.fromString
+
+
+unpackUtf8String :: B.Utf8 -> String
+unpackUtf8String = P.toString
 
 messageGet :: (P.Wire a, P.ReflectDescriptor a) => B.ByteString -> Either ProtocolError a
 messageGet bytes = either (Left . DecodeFailure) (return . fst) (P.messageGet bytes)

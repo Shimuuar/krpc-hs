@@ -1,0 +1,28 @@
+Name:           krpc-codegen
+Version:        0.1
+Synopsis:       Code generator for krpc-hs
+Description:
+  It generates code from 
+
+Cabal-Version:  >= 1.10
+License:        GPL3
+License-File:   LICENSE
+Author:         Aleksey Khudyakov <alexey.skladnoy@gmail.com>
+Maintainer:     Aleksey Khudyakov <alexey.skladnoy@gmail.com>
+Homepage:       http://bitbucket.org/Shimuuar/krpc-codegen
+Category:       Data
+Build-Type:     Simple
+
+Executable kprc-generate
+  Hs-source-dirs:      src
+  Main-is:             Main.hs
+  Ghc-options:         -Wall
+  Default-Language:    Haskell2010
+  Build-Depends:       base             >= 4.9 && <5
+                     , template-haskell >= 2.11 
+                     , bytestring       >= 0.10
+                     , aeson            >= 1.2
+                     , split            >= 0.2.3.2
+                     , text             >= 1.1
+                     , unordered-containers
+                     , interpolate      >= 0.1.1

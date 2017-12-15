@@ -8,7 +8,7 @@ set -e
 [ -f krpc-hs.cabal ] || { echo "Not in root of project"; exit 1; }
 
 # Run
-VER=${1:-0.3.11}
+VER=${1:-0.4.3}
 PROTO=KRPC/"$VER"/krpc.proto
 TEMP=KRPC/krpc.proto
 sed -re 's/^  ([A-Z]|string|bytes|uint|int|float|double|bool)/  optional \1/' \
