@@ -1,3 +1,4 @@
+{-# LANGUAGE DefaultSignatures          #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
@@ -7,6 +8,7 @@ module KRPCHS.Internal.Requests (
     -- * Monadic API for KRPC
     KRPC(..)
   , runKRPC
+  , forceRpcCall
     -- ** Internals
   , Accum(..)
   , RespParser(..)
@@ -20,6 +22,7 @@ module KRPCHS.Internal.Requests (
   , MonadRPC(..)
     -- * Serialization and deserialization
   , KRPCResponseExtractable(..)
+  , KRPCObject(..)
   , checkError
   , makeArgument
   , makeRequest
@@ -128,6 +131,9 @@ instance (MonadIO m, MonadThrow m) => MonadIO (KRPC m) where
 instance MonadTrans KRPC where
   lift = Immediate . const
 
+instance (MonadIO m, MonadThrow m) => MonadThrow (KRPC m) where
+  throwM = lift . throwM
+
 -- Accumulator for requests. Basically it's pair of list of requests
 -- and parser for corresponding requests
 data Accum a = Accum !(Seq KReq.ProcedureCall) (RespParser a)
@@ -182,7 +188,7 @@ newtype RpcCall a = RpcCall KReq.ProcedureCall
                     deriving (Show)
 
 -- | Monad in which one could perform RPC calls
-class (MonadIO m) => MonadRPC m where
+class (MonadIO m, MonadThrow m) => MonadRPC m where
   call :: KRPCResponseExtractable a => RpcCall a -> m a
 
 instance (MonadIO m, MonadThrow m) => MonadRPC (KRPC m) where
@@ -273,7 +279,9 @@ withSocket host port action
     initS = liftIO $do
       -- FIXME: do something more sensible!
       addr:_ <- getAddrInfo Nothing (Just host) (Just port)
+      print addr
       sock   <- socket AF_INET Stream defaultProtocol
+      print sock
       return (sock,addr)
     fini (sock,_)    = liftIO $ close sock
     body (sock,addr) = do
@@ -384,11 +392,17 @@ streamHandshake sock clientId = do
 -- Decoding of messages
 ----------------------------------------------------------------
 
-class (PbSerializable a) => KRPCResponseExtractable a where
-    extract :: KPRes.ProcedureResult -> Either ProtocolError a
-    extract r = do
-        checkError r
-        maybe (Left ResponseEmpty) decodePb (KPRes.value r)
+class KRPCResponseExtractable a where
+  extract :: KPRes.ProcedureResult -> Either ProtocolError a
+  default extract :: PbSerializable a
+                  => KPRes.ProcedureResult -> Either ProtocolError a
+  extract r = do checkError r
+                 case KPRes.value r of
+                   Nothing -> Left ResponseEmpty
+                   Just pb -> decodePb pb
+
+class KRPCObject a where
+  isKrpcNull :: a -> Bool
 
 instance KRPCResponseExtractable Bool
 instance KRPCResponseExtractable Float
@@ -406,6 +420,17 @@ instance (PbSerializable a, PbSerializable b, PbSerializable c)
 instance (PbSerializable a, PbSerializable b, PbSerializable c, PbSerializable d)
          => KRPCResponseExtractable (a, b, c, d)
 
+instance (KRPCResponseExtractable a, KRPCObject a, PbSerializable a
+         ) => KRPCResponseExtractable (Maybe a) where
+  extract r = do
+    checkError r
+    case KPRes.value r of
+      Nothing -> Left ResponseEmpty
+      Just pb -> do
+        a <- decodePb pb
+        return $ if isKrpcNull a then Nothing
+                                 else Just a
+
 instance KRPCResponseExtractable () where
     extract = checkError
 
@@ -422,7 +447,6 @@ instance (Ord a, PbSerializable a) => KRPCResponseExtractable (Set.Set a) where
         case KPRes.value r of
             Nothing    -> Right Set.empty
             Just bytes -> decodePb bytes
-
 
 instance (Ord k, PbSerializable k, PbSerializable v
          ) => KRPCResponseExtractable (M.Map k v) where

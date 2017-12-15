@@ -34,6 +34,7 @@ main = check $ runKRPC "simple program" "192.168.1.5" "50000" $ do
     print control
     print ref
     print orbit
+  liftIO . print =<< call (getOrbitNextOrbit orbit)
   return ()
   --
        

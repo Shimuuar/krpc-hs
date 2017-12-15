@@ -84,28 +84,30 @@ deriveJSONpref "par"  'Param
 ----------------------------------------------------------------
 
 -- Pretty print type information
-pprType :: Type -> Text
-pprType Type{tyCode="DOUBLE"} = "Double"
-pprType Type{tyCode="FLOAT"}  = "Float"
-pprType Type{tyCode="SINT32"} = "Int32"
-pprType Type{tyCode="SINT64"} = "Int64"
-pprType Type{tyCode="UINT32"} = "Word32"
-pprType Type{tyCode="UINT64"} = "Word64"
-pprType Type{tyCode="BOOL"}   = "Bool"
-pprType Type{tyCode="STRING"} = "Data.Text.Text"
-pprType Type{tyCode="SET", tyTypes=Just [ty]}
-  = "(Set " <> pprType ty <> ")"
-pprType Type{tyCode="LIST", tyTypes=Just [ty]}
-  = "[" <> pprType ty <> "]"
-pprType Type{tyCode="DICTIONARY", tyTypes=Just [k,v]}
-  = "(Map " <> pprType k <> " " <> pprType v <> ")"
-pprType Type{tyCode="CLASS", tyService=Just srv, tyName=Just nm}
+pprType :: Bool -> Type -> Text
+pprType False Type{tyCode="DOUBLE"} = "Double"
+pprType False Type{tyCode="FLOAT"}  = "Float"
+pprType False Type{tyCode="SINT32"} = "Int32"
+pprType False Type{tyCode="SINT64"} = "Int64"
+pprType False Type{tyCode="UINT32"} = "Word32"
+pprType False Type{tyCode="UINT64"} = "Word64"
+pprType False Type{tyCode="BOOL"}   = "Bool"
+pprType False Type{tyCode="STRING"} = "Data.Text.Text"
+pprType False Type{tyCode="SET", tyTypes=Just [ty]}
+  = "(Set " <> pprType False ty <> ")"
+pprType False Type{tyCode="LIST", tyTypes=Just [ty]}
+  = "[" <> pprType False ty <> "]"
+pprType False Type{tyCode="DICTIONARY", tyTypes=Just [k,v]}
+  = "(Map " <> pprType False k <> " " <> pprType False v <> ")"
+pprType False Type{tyCode="CLASS", tyService=Just srv, tyName=Just nm}
   = "KRPCHS.Service."<>srv<>"."<>nm
-pprType Type{tyCode="ENUMERATION", tyService=Just srv, tyName=Just nm}
+pprType True  Type{tyCode="CLASS", tyService=Just srv, tyName=Just nm}
+  = "(Maybe KRPCHS.Service."<>srv<>"."<>nm<>")"
+pprType False Type{tyCode="ENUMERATION", tyService=Just srv, tyName=Just nm}
   = "KRPCHS.Service."<>srv<>"."<>nm
-pprType Type{tyCode="TUPLE", tyTypes=Just xs}
-  = "(" <> T.intercalate "," (map pprType xs) <> ")"
-pprType ty = error (show ty)
+pprType False Type{tyCode="TUPLE", tyTypes=Just xs}
+  = "(" <> T.intercalate "," (map (pprType False) xs) <> ")"
+pprType n ty = error (show (n,ty))
 
 -- Pretty-print class declaration
 pprClass :: (Text,Class) -> String
@@ -113,7 +115,9 @@ pprClass (nm,c) = [i|
 {-| #{clsDocumentation c} -}
 newtype #{nm} = #{nm} Int
   deriving (Show,Eq,Ord,PbSerializable)
-instance KRPCResponseExtractable #{nm}|]
+instance KRPCResponseExtractable #{nm}
+instance KRPCObject #{nm} where
+  isKrpcNull (#{nm} i) = i == 0|]
 
 pprEnum :: (Text,Enumeration) -> String
 pprEnum (nm,e)
@@ -124,8 +128,8 @@ data #{nm}
   deriving (Show,Eq,Ord,Enum)
 
 instance PbSerializable #{nm} where
-    encodePb   = encodePb . fromEnum
-    decodePb b = toEnum <$> decodePb b
+  encodePb   = encodePb . fromEnum
+  decodePb b = toEnum <$> decodePb b
 instance KRPCResponseExtractable #{nm}|]
   where
     evals = sortOn evValue (enumValues e)
@@ -153,9 +157,17 @@ pprProc srv (nm,prc)
 #{name} #{T.intercalate " " parNms} =
   RpcCall $ makeRequest "#{srv}" #{procId prc} [#{intercalate "," args}]|]
   where
-    name   = mangleProcName nm    
-    types  = map (pprType . parType) (procParameters prc)
-          ++ [T.pack [i|RpcCall #{maybe "()" pprType $ procReturn_type prc}|]]
+    name   = case procReturn_is_nullable prc of
+               -- Just True -> error "A"
+               _ -> mangleProcName nm
+    retT   = case procReturn_type prc of
+               Nothing -> "()"
+               Just t  -> case procReturn_is_nullable prc of
+                 Just True  -> pprType True t
+                 Just False -> pprType False t
+                 Nothing    -> pprType False t
+    types  = map (pprType False . parType) (procParameters prc)
+          ++ ["RpcCall " <> retT]
     parNms = [ case nm of "type" -> "ty"
                           _      -> nm
              | nm <- map parName (procParameters prc)
