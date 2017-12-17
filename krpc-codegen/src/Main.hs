@@ -128,8 +128,8 @@ data #{nm}
   deriving (Show,Eq,Ord,Enum)
 
 instance PbSerializable #{nm} where
-  encodePb   = encodePb . fromEnum
-  decodePb b = toEnum <$> decodePb b
+  encodePb   = encodePb . (fromIntegral :: Int -> Int32) . fromEnum
+  decodePb b = toEnum . (fromIntegral :: Int32 -> Int) <$> decodePb b
 instance KRPCResponseExtractable #{nm}|]
   where
     evals = sortOn evValue (enumValues e)
