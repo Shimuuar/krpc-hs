@@ -149,12 +149,13 @@ newtype RespParser a = RespParser
   deriving (Functor,Applicative,Monad)
 
 -- Parse single field of responce
-parseSingle :: KRPCResponseExtractable a => RespParser a
-parseSingle = RespParser $ do
+parseSingle :: (KPRes.ProcedureResult -> Either ProtocolError a)
+            -> RespParser a
+parseSingle f = RespParser $ do
   s <- get
   case Seq.viewl s of
     Seq.EmptyL  -> throw (ResponseParserFailed "Not enough responces!")
-    x Seq.:< xs -> put xs >> lift (extract x)
+    x Seq.:< xs -> put xs >> lift (f x)
 
 -- Evaluate response parser. It throws exception if there's not enough
 -- input
@@ -184,16 +185,18 @@ runKRPC name host port program = withRPCClient name host port $ \c -> do
 
 -- |  Prepared  RPC call  it's  tagged  by  expected return  type.  To
 --    actually perform call use 'call'.
-newtype RpcCall a = RpcCall KReq.ProcedureCall
-                    deriving (Show)
+data RpcCall a
+  = RpcCall !KReq.ProcedureCall
+            (KPRes.ProcedureResult -> Either ProtocolError a)
+  deriving (Functor)
 
 -- | Monad in which one could perform RPC calls
 class (MonadIO m, MonadThrow m) => MonadRPC m where
   call :: KRPCResponseExtractable a => RpcCall a -> m a
 
 instance (MonadIO m, MonadThrow m) => MonadRPC (KRPC m) where
-  call (RpcCall req) = Batched $ \_ ->
-    pure (Accum (Seq.singleton req) parseSingle)
+  call (RpcCall req f) = Batched $ \_ ->
+    pure (Accum (Seq.singleton req) (parseSingle f))
 
 
 ----------------------------------------------------------------

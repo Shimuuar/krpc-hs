@@ -15,7 +15,6 @@ import           Data.String.Interpolate
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.HashMap.Strict as HM
 import qualified Data.HashSet        as HS
-import           Text.Groom
 import qualified Data.Text as T
 import System.Environment (getArgs)
 import TH
@@ -155,7 +154,7 @@ pprProc srv (nm,prc)
   = [i|
 #{name} :: #{T.intercalate " -> " types}
 #{name} #{T.intercalate " " parNms} =
-  RpcCall $ makeRequest "#{srv}" #{procId prc} [#{intercalate "," args}]|]
+  RpcCall (makeRequest "#{srv}" #{procId prc} [#{intercalate "," args}]) extract|]
   where
     name   = case procReturn_is_nullable prc of
                -- Just True -> error "A"
