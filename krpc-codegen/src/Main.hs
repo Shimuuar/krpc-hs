@@ -152,9 +152,11 @@ mangleProcName s = T.pack $ case splitOn "_" (T.unpack s) of
 pprProc :: Text -> (Text,Procedure) -> String
 pprProc srv (nm,prc)
   = [i|
-#{name} :: #{T.intercalate " -> " types}
+#{name} :: #{T.intercalate " -> " allTypes}
 #{name} #{T.intercalate " " parNms} =
-  RpcCall (makeRequest "#{srv}" #{procId prc} [#{intercalate "," args}]) extract|]
+  RpcCall
+    (makeRequest "#{srv}" #{procId prc} [#{intercalate ", " args}])
+    #{extract}|]
   where
     name   = case procReturn_is_nullable prc of
                -- Just True -> error "A"
@@ -165,14 +167,22 @@ pprProc srv (nm,prc)
                  Just True  -> pprType True t
                  Just False -> pprType False t
                  Nothing    -> pprType False t
-    types  = map (pprType False . parType) (procParameters prc)
-          ++ ["RpcCall " <> retT]
-    parNms = [ case nm of "type" -> "ty"
+    realT | retT == "Float" = "Double"
+          | otherwise       = retT
+    extract
+      | retT == "Float" = "(fmap (realToFrac :: Float -> Double) . extract)"
+      | otherwise       = "extract"
+    types    = map (pprType False . parType) (procParameters prc)
+    allTypes = [ if ty == "Float" then "Double" else ty | ty <- types]
+            ++ ["RpcCall " <> realT]
+    parNms = [ case nm of "type" -> "type_"
                           _      -> nm
              | nm <- map parName (procParameters prc)
              ]
-    args   = [ [i|makeArgument #{n} #{arg}|] 
-             | (n,arg) <- [0..] `zip` parNms
+    args   = [ case ty of
+                 "Float" -> [i|makeArgument #{n} (realToFrac #{arg} :: Float)|]
+                 _       -> [i|makeArgument #{n} #{arg}|]
+             | (n,arg,ty) <- zip3 [0..] parNms types
              ]
 
 moduleImports :: Text -> Module -> [Text]
