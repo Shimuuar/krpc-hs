@@ -193,11 +193,12 @@ data RpcCall a
 -- | Monad in which one could perform RPC calls
 class (MonadIO m, MonadThrow m) => MonadRPC m where
   call :: KRPCResponseExtractable a => RpcCall a -> m a
+  askRpcClient :: m RPCClient
 
 instance (MonadIO m, MonadThrow m) => MonadRPC (KRPC m) where
   call (RpcCall req f) = Batched $ \_ ->
     pure (Accum (Seq.singleton req) (parseSingle f))
-
+  askRpcClient = Immediate return
 
 ----------------------------------------------------------------
 -- Networking
