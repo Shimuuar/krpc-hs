@@ -119,7 +119,7 @@ forceRpcCall c (Batched   m) = do
   Accum xs p <- m c
   resp <- liftIO $ sendRequest c xs
   case KRes.error resp of
-    Just  e -> throwM (KRPCError (show e))
+    Just  e -> throwM (KRPCError e)
     Nothing -> return ()
   case runRespParser p (KRes.results resp) of
     Right a -> return a
@@ -461,7 +461,7 @@ instance (Ord k, PbSerializable k, PbSerializable v
 checkError :: KPRes.ProcedureResult -> Either ProtocolError ()
 checkError r = case KPRes.error r of
   Nothing -> return ()
-  Just e  -> Left $ KRPCError $ show e
+  Just e  -> Left $ KRPCError e
 
 
 makeArgument :: (PbSerializable a) => Word32 -> a -> KArg.Argument
