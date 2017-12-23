@@ -41,7 +41,7 @@ module KRPCHS.Internal.Requests (
   -- -- , getStreamMessage
   ) where
 
-import Control.Monad.Catch  (MonadThrow(..),MonadCatch,MonadMask,bracket,try)
+import Control.Monad.Catch  (MonadThrow(..),MonadCatch(..),MonadMask,bracket,try)
 import Control.Monad.Reader
 import Control.Monad.State.Strict
 import Control.Exception    (SomeException(..),AsyncException(..),Exception(..),throw)
@@ -133,6 +133,10 @@ instance MonadTrans KRPC where
 
 instance (MonadIO m, MonadThrow m) => MonadThrow (KRPC m) where
   throwM = lift . throwM
+
+instance (MonadIO m, MonadCatch m) => MonadCatch (KRPC m) where
+  catch m hnd = Immediate $ \c ->
+    forceRpcCall c m `catch` (forceRpcCall c . hnd)
 
 -- Accumulator for requests. Basically it's pair of list of requests
 -- and parser for corresponding requests
