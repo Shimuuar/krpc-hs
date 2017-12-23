@@ -41,7 +41,7 @@ module KRPCHS.Internal.Requests (
   -- -- , getStreamMessage
   ) where
 
-import Control.Monad.Catch  (MonadThrow(..),MonadCatch(..),MonadMask,bracket,try)
+import Control.Monad.Catch  (MonadThrow(..),MonadCatch(..),MonadMask(..),bracket,try)
 import Control.Monad.Reader
 import Control.Monad.State.Strict
 import Control.Exception    (SomeException(..),AsyncException(..),Exception(..),throw)
@@ -137,6 +137,25 @@ instance (MonadIO m, MonadThrow m) => MonadThrow (KRPC m) where
 instance (MonadIO m, MonadCatch m) => MonadCatch (KRPC m) where
   catch m hnd = Immediate $ \c ->
     forceRpcCall c m `catch` (forceRpcCall c . hnd)
+
+instance (MonadIO m, MonadMask m) => MonadMask (KRPC m) where
+  mask cont
+    = Immediate
+    $ \c -> mask
+    $ \unmask -> forceRpcCall c (cont (hoist unmask))
+    where
+      hoist :: (MonadIO m, MonadThrow m)
+            => (m a -> m a) -> (KRPC m a -> KRPC m a)
+      hoist f m = Immediate $ \c -> f $ forceRpcCall c m
+  uninterruptibleMask cont
+    = Immediate
+    $ \c -> uninterruptibleMask
+    $ \unmask -> forceRpcCall c (cont (hoist unmask))
+    where
+      hoist :: (MonadIO m, MonadThrow m)
+            => (m a -> m a) -> (KRPC m a -> KRPC m a)
+      hoist f m = Immediate $ \c -> f $ forceRpcCall c m
+
 
 -- Accumulator for requests. Basically it's pair of list of requests
 -- and parser for corresponding requests
