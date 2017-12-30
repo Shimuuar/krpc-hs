@@ -31,14 +31,16 @@ connectRpcMsg :: String -> KRPC.ConnectionRequest
 connectRpcMsg name = KRPC.ConnectionRequest
     { KRPC.type'             = Just KRPC.RPC
     , KRPC.client_name       = Just (packUtf8String name)
-    , KRPC.client_identifier = Nothing }
+    , KRPC.client_identifier = Nothing
+    }
 
 
 connectStreamMsg :: BL.ByteString -> KRPC.ConnectionRequest
 connectStreamMsg clientid = KRPC.ConnectionRequest
     { KRPC.type'             = Just KRPC.STREAM
     , KRPC.client_name       = Nothing
-    , KRPC.client_identifier = Just clientid }
+    , KRPC.client_identifier = Just clientid
+    }
 
 
 recvN :: Socket -> Int -> IO BS.ByteString
